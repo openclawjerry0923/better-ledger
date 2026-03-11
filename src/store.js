@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { db, defaultCategories } from './db';
 
 const monthKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+const dayKey = (d = new Date()) => d.toISOString().slice(0, 10);
 
 const defaultBudgets = Object.fromEntries(defaultCategories.expense.map((c) => [c, 0]));
 const defaultAppCategories = {
@@ -9,10 +10,31 @@ const defaultAppCategories = {
   income: [...defaultCategories.income],
 };
 
+const defaultGamification = {
+  coins: 0,
+  dailyEarned: 0,
+  lastEarnDate: dayKey(),
+  loginClaimedAt: '',
+};
+
+function normalizeGamification(raw) {
+  const today = dayKey();
+  const base = { ...defaultGamification, ...(raw || {}) };
+  if (base.lastEarnDate !== today) {
+    return { ...base, dailyEarned: 0, lastEarnDate: today, loginClaimedAt: '' };
+  }
+  return base;
+}
+
 export const useLedgerStore = create((set, get) => ({
   transactions: [],
   todos: [],
-  settings: { currency: 'TWD', budgets: defaultBudgets, categories: defaultAppCategories },
+  settings: {
+    currency: 'TWD',
+    budgets: defaultBudgets,
+    categories: defaultAppCategories,
+    gamification: defaultGamification,
+  },
   loading: false,
 
   async init() {
@@ -22,6 +44,7 @@ export const useLedgerStore = create((set, get) => ({
     const currency = await db.settings.get('currency');
     const budgets = await db.settings.get('budgets');
     const categories = await db.settings.get('categories');
+    const gamification = await db.settings.get('gamification');
 
     const mergedCategories = {
       expense: categories?.value?.expense?.length ? categories.value.expense : defaultAppCategories.expense,
@@ -29,6 +52,20 @@ export const useLedgerStore = create((set, get) => ({
     };
 
     const normalizedBudgets = Object.fromEntries(mergedCategories.expense.map((c) => [c, Number(budgets?.value?.[c] || 0)]));
+    let normalizedGame = normalizeGamification(gamification?.value);
+
+    // daily login bonus: once per day, still respects max 10/day
+    const today = dayKey();
+    if (normalizedGame.loginClaimedAt !== today && normalizedGame.dailyEarned < 10) {
+      normalizedGame = {
+        ...normalizedGame,
+        coins: Number(normalizedGame.coins || 0) + 1,
+        dailyEarned: Number(normalizedGame.dailyEarned || 0) + 1,
+        loginClaimedAt: today,
+        lastEarnDate: today,
+      };
+      await db.settings.put({ key: 'gamification', value: normalizedGame });
+    }
 
     set({
       transactions,
@@ -37,15 +74,38 @@ export const useLedgerStore = create((set, get) => ({
         currency: currency?.value || 'TWD',
         budgets: normalizedBudgets,
         categories: mergedCategories,
+        gamification: normalizedGame,
       },
       loading: false,
     });
+  },
+
+  async awardCoin() {
+    const game = normalizeGamification(get().settings.gamification);
+    if (game.dailyEarned >= 10) {
+      if (game.lastEarnDate !== get().settings.gamification.lastEarnDate || game.dailyEarned !== get().settings.gamification.dailyEarned) {
+        await db.settings.put({ key: 'gamification', value: game });
+        set((s) => ({ settings: { ...s.settings, gamification: game } }));
+      }
+      return false;
+    }
+
+    const next = {
+      ...game,
+      coins: Number(game.coins || 0) + 1,
+      dailyEarned: Number(game.dailyEarned || 0) + 1,
+      lastEarnDate: dayKey(),
+    };
+    await db.settings.put({ key: 'gamification', value: next });
+    set((s) => ({ settings: { ...s.settings, gamification: next } }));
+    return true;
   },
 
   async addTransaction(tx) {
     const payload = { ...tx, createdAt: new Date().toISOString() };
     const id = await db.transactions.add(payload);
     set((s) => ({ transactions: [{ ...payload, id }, ...s.transactions] }));
+    await get().awardCoin();
   },
 
   async updateTransaction(id, patch) {
@@ -108,7 +168,9 @@ export const useLedgerStore = create((set, get) => ({
   async toggleTodo(id) {
     const target = get().todos.find((t) => t.id === id);
     if (!target) return;
-    await get().updateTodo(id, { completed: target.completed ? 0 : 1 });
+    const becameDone = !target.completed;
+    await get().updateTodo(id, { completed: becameDone ? 1 : 0 });
+    if (becameDone) await get().awardCoin();
   },
 
   async deleteTodo(id) {

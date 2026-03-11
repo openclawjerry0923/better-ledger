@@ -242,9 +242,20 @@ export default function App() {
     }
   };
 
+  const game = settings.gamification || { coins: 0, dailyEarned: 0 };
+  const dailyPct = Math.min(100, Math.round(((game.dailyEarned || 0) / 10) * 100));
+
   return (
     <div className="app">
-      <header><h1>Better Ledger</h1><p>專業級本地記帳 · 待辦整合版</p></header>
+      <header>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div>
+            <h1>Better Ledger</h1>
+            <p>專業級本地記帳 · 待辦整合版</p>
+          </div>
+          <div className="coinBadge">🪙 {game.coins || 0}</div>
+        </div>
+      </header>
 
       <nav className="tabs">
         {[
@@ -252,7 +263,7 @@ export default function App() {
         ].map(([k, n]) => <button key={k} className={tab === k ? 'active' : ''} onClick={() => setTab(k)}>{n}</button>)}
       </nav>
 
-      {tab === 'home' && <section className="cards"><label>月份 <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} /></label><div className="card"><span>收入</span><b>{money(data.income, settings.currency)}</b></div><div className="card"><span>支出</span><b>{money(data.expense, settings.currency)}</b></div><div className="card highlight"><span>結餘</span><b>{money(data.balance, settings.currency)}</b></div></section>}
+      {tab === 'home' && <section className="cards"><label>月份 <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} /></label><div className="card"><span>收入</span><b>{money(data.income, settings.currency)}</b></div><div className="card"><span>支出</span><b>{money(data.expense, settings.currency)}</b></div><div className="card highlight"><span>結餘</span><b>{money(data.balance, settings.currency)}</b></div><div className="card coinCard"><span>今日金幣進度 {game.dailyEarned || 0}/10</span><div className="progress"><i style={{ width: `${dailyPct}%` }} /></div><small>來源：每日登入 + 完成待辦 + 新增記帳</small></div></section>}
 
       {tab === 'list' && <section><h2>交易明細</h2><div className="toolbar toolbar3"><input placeholder="搜尋分類、備註、日期" value={query} onChange={(e) => setQuery(e.target.value)} /><select value={listMonth} onChange={(e) => setListMonth(e.target.value)}><option value="all">全部月份</option><option value={monthStr()}>{monthStr()}</option></select><select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}><option value="all">全部類型</option><option value="expense">支出</option><option value="income">收入</option></select></div><ul className="list">{pagedRows.map((t) => <li key={t.id}><div><b>{t.category}</b><small>{t.date} {t.note ? `· ${t.note}` : ''}</small></div><div><span className={t.type}>{t.type === 'income' ? '+' : '-'}{money(t.amount, settings.currency)}</span><button onClick={() => startEdit(t)}>編輯</button><button onClick={() => deleteTransaction(t.id)}>刪除</button></div></li>)}</ul><div className="pager"><button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>上一頁</button><span>{page} / {pageCount}</span><button disabled={page >= pageCount} onClick={() => setPage((p) => p + 1)}>下一頁</button></div>{!filteredRows.length && <p className="empty">沒有符合條件的交易</p>}</section>}
 
@@ -298,7 +309,7 @@ export default function App() {
         </section>
       )}
 
-      {tab === 'settings' && <section className="form"><h2>設定</h2><label>幣別<select value={settings.currency} onChange={(e) => setCurrency(e.target.value)}><option value="TWD">TWD</option><option value="JPY">JPY</option><option value="USD">USD</option></select></label><h3>分類管理</h3><div className="toolbar toolbar3" style={{ marginBottom: 8 }}><select value={catType} onChange={(e) => setCatType(e.target.value)}><option value="expense">支出分類</option><option value="income">收入分類</option></select><input value={newCategory} placeholder="新增分類名稱" onChange={(e) => setNewCategory(e.target.value)} /><button type="button" onClick={addCategory}>新增分類</button></div><div className="chips">{(settings.categories?.[catType] || []).map((c) => <span key={c} className="chip">{c}<button type="button" onClick={() => removeCategory(catType, c)}>×</button></span>)}</div><h3>分類預算（每月）</h3><div className="budgetGrid">{(settings.categories?.expense || defaultCategories.expense).map((cat) => { const limit = Number(settings.budgets?.[cat] || 0); const spent = Number(budgetSpent[cat] || 0); const over = limit > 0 && spent > limit; return <label key={cat}>{cat} {over ? '⚠️' : ''}<input type="number" value={limit} onChange={(e) => setBudgets({ ...settings.budgets, [cat]: Number(e.target.value || 0) })} /><small>{limit > 0 ? `已用 ${money(spent, settings.currency)} / ${money(limit, settings.currency)}` : `已用 ${money(spent, settings.currency)}`}</small></label>; })}</div><div className="actions"><button type="button" onClick={exportJson}>匯出 JSON（本月）</button><button type="button" onClick={exportCsv}>匯出 CSV（本月）</button><button type="button" onClick={backupAll}>完整備份（設定+全部交易）</button><label className="importLabel">匯入 JSON（可月資料或完整備份）<input type="file" accept="application/json" onChange={importJson} /></label></div></section>}
+      {tab === 'settings' && <section className="form"><h2>設定</h2><div className="coinInfo">🪙 目前金幣：{game.coins || 0}　|　今日：{game.dailyEarned || 0}/10</div><label>幣別<select value={settings.currency} onChange={(e) => setCurrency(e.target.value)}><option value="TWD">TWD</option><option value="JPY">JPY</option><option value="USD">USD</option></select></label><h3>分類管理</h3><div className="toolbar toolbar3" style={{ marginBottom: 8 }}><select value={catType} onChange={(e) => setCatType(e.target.value)}><option value="expense">支出分類</option><option value="income">收入分類</option></select><input value={newCategory} placeholder="新增分類名稱" onChange={(e) => setNewCategory(e.target.value)} /><button type="button" onClick={addCategory}>新增分類</button></div><div className="chips">{(settings.categories?.[catType] || []).map((c) => <span key={c} className="chip">{c}<button type="button" onClick={() => removeCategory(catType, c)}>×</button></span>)}</div><h3>分類預算（每月）</h3><div className="budgetGrid">{(settings.categories?.expense || defaultCategories.expense).map((cat) => { const limit = Number(settings.budgets?.[cat] || 0); const spent = Number(budgetSpent[cat] || 0); const over = limit > 0 && spent > limit; return <label key={cat}>{cat} {over ? '⚠️' : ''}<input type="number" value={limit} onChange={(e) => setBudgets({ ...settings.budgets, [cat]: Number(e.target.value || 0) })} /><small>{limit > 0 ? `已用 ${money(spent, settings.currency)} / ${money(limit, settings.currency)}` : `已用 ${money(spent, settings.currency)}`}</small></label>; })}</div><div className="actions"><button type="button" onClick={exportJson}>匯出 JSON（本月）</button><button type="button" onClick={exportCsv}>匯出 CSV（本月）</button><button type="button" onClick={backupAll}>完整備份（設定+全部交易）</button><label className="importLabel">匯入 JSON（可月資料或完整備份）<input type="file" accept="application/json" onChange={importJson} /></label></div></section>}
     </div>
   );
 }

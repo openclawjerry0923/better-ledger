@@ -44,6 +44,15 @@ header p {
   color: var(--muted);
 }
 
+.coinBadge {
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+}
+
 .tabs {
   display: flex;
   gap: 8px;
@@ -82,7 +91,7 @@ section {
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -121,6 +130,30 @@ section {
 .card.highlight {
   border-color: #bfdbfe;
   background: linear-gradient(180deg, #eff6ff, #dbeafe);
+}
+
+.coinCard {
+  border-color: #fed7aa;
+  background: linear-gradient(180deg, #fff7ed, #ffedd5);
+}
+
+.progress {
+  height: 10px;
+  background: #fde68a;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.coinCard small,
+.coinInfo {
+  color: #92400e;
 }
 
 h2 {
