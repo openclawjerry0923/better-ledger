@@ -279,6 +279,33 @@ h3 {
   margin: 4px 0;
 }
 
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chip {
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #3730a3;
+  border-radius: 999px;
+  padding: 6px 10px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.chip button {
+  border: none;
+  background: transparent;
+  color: #4338ca;
+  cursor: pointer;
+  font-weight: 700;
+}
+
 @media (max-width: 760px) {
   .cards {
     grid-template-columns: 1fr;

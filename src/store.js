@@ -4,10 +4,14 @@ import { db, defaultCategories } from './db';
 const monthKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 
 const defaultBudgets = Object.fromEntries(defaultCategories.expense.map((c) => [c, 0]));
+const defaultAppCategories = {
+  expense: [...defaultCategories.expense],
+  income: [...defaultCategories.income],
+};
 
 export const useLedgerStore = create((set, get) => ({
   transactions: [],
-  settings: { currency: 'TWD', budgets: defaultBudgets },
+  settings: { currency: 'TWD', budgets: defaultBudgets, categories: defaultAppCategories },
   loading: false,
 
   async init() {
@@ -15,12 +19,21 @@ export const useLedgerStore = create((set, get) => ({
     const transactions = await db.transactions.orderBy('date').reverse().toArray();
     const currency = await db.settings.get('currency');
     const budgets = await db.settings.get('budgets');
+    const categories = await db.settings.get('categories');
+
+    const mergedCategories = {
+      expense: categories?.value?.expense?.length ? categories.value.expense : defaultAppCategories.expense,
+      income: categories?.value?.income?.length ? categories.value.income : defaultAppCategories.income,
+    };
+
+    const normalizedBudgets = Object.fromEntries(mergedCategories.expense.map((c) => [c, Number(budgets?.value?.[c] || 0)]));
 
     set({
       transactions,
       settings: {
         currency: currency?.value || 'TWD',
-        budgets: { ...defaultBudgets, ...(budgets?.value || {}) },
+        budgets: normalizedBudgets,
+        categories: mergedCategories,
       },
       loading: false,
     });
@@ -61,6 +74,11 @@ export const useLedgerStore = create((set, get) => ({
   async setBudgets(budgets) {
     await db.settings.put({ key: 'budgets', value: budgets });
     set((s) => ({ settings: { ...s.settings, budgets } }));
+  },
+
+  async setCategories(categories) {
+    await db.settings.put({ key: 'categories', value: categories });
+    set((s) => ({ settings: { ...s.settings, categories } }));
   },
 
   summary(month = monthKey()) {

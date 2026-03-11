@@ -24,7 +24,7 @@ function toCsv(rows) {
 }
 
 export default function App() {
-  const { init, transactions, addTransaction, updateTransaction, deleteTransaction, replaceAllTransactions, summary, settings, setCurrency, setBudgets } = useLedgerStore();
+  const { init, transactions, addTransaction, updateTransaction, deleteTransaction, replaceAllTransactions, summary, settings, setCurrency, setBudgets, setCategories } = useLedgerStore();
   const [tab, setTab] = useState('home');
   const [month, setMonth] = useState(monthStr());
   const [query, setQuery] = useState('');
@@ -33,12 +33,15 @@ export default function App() {
   const [page, setPage] = useState(1);
   const [form, setForm] = useState({ type: 'expense', category: '餐飲', amount: '', date: new Date().toISOString().slice(0, 10), note: '' });
   const [editingId, setEditingId] = useState(null);
+  const [catType, setCatType] = useState('expense');
+  const [newCategory, setNewCategory] = useState('');
 
   useEffect(() => { init(); }, [init]);
 
   useEffect(() => {
-    setForm((f) => ({ ...f, category: defaultCategories[f.type][0] }));
-  }, [form.type]);
+    const list = settings.categories?.[form.type] || defaultCategories[form.type];
+    setForm((f) => ({ ...f, category: list[0] || '其他' }));
+  }, [form.type, settings.categories]);
 
   const data = useMemo(() => summary(month), [summary, month, transactions]);
 
@@ -142,6 +145,36 @@ export default function App() {
     URL.revokeObjectURL(a.href);
   };
 
+  const addCategory = async () => {
+    const name = newCategory.trim();
+    if (!name) return;
+    const cur = settings.categories?.[catType] || [];
+    if (cur.includes(name)) return;
+    const nextCategories = {
+      ...settings.categories,
+      [catType]: [...cur, name],
+    };
+    const nextBudgets = catType === 'expense'
+      ? { ...settings.budgets, [name]: 0 }
+      : settings.budgets;
+
+    await setCategories(nextCategories);
+    await setBudgets(nextBudgets);
+    setNewCategory('');
+  };
+
+  const removeCategory = async (type, name) => {
+    const cur = settings.categories?.[type] || [];
+    if (cur.length <= 1) return;
+    const nextCategories = { ...settings.categories, [type]: cur.filter((c) => c !== name) };
+    await setCategories(nextCategories);
+    if (type === 'expense') {
+      const nextBudgets = { ...settings.budgets };
+      delete nextBudgets[name];
+      await setBudgets(nextBudgets);
+    }
+  };
+
   const importJson = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -237,7 +270,7 @@ export default function App() {
               <option value="expense">支出</option><option value="income">收入</option>
             </select>
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-              {defaultCategories[form.type].map((c) => <option key={c} value={c}>{c}</option>)}
+              {(settings.categories?.[form.type] || defaultCategories[form.type]).map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
             <input type="number" placeholder="金額" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
             <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
@@ -272,9 +305,24 @@ export default function App() {
               <option value="USD">USD</option>
             </select>
           </label>
+          <h3>分類管理</h3>
+          <div className="toolbar toolbar3" style={{ marginBottom: 8 }}>
+            <select value={catType} onChange={(e) => setCatType(e.target.value)}>
+              <option value="expense">支出分類</option>
+              <option value="income">收入分類</option>
+            </select>
+            <input value={newCategory} placeholder="新增分類名稱" onChange={(e) => setNewCategory(e.target.value)} />
+            <button type="button" onClick={addCategory}>新增分類</button>
+          </div>
+          <div className="chips">
+            {(settings.categories?.[catType] || []).map((c) => (
+              <span key={c} className="chip">{c}<button type="button" onClick={() => removeCategory(catType, c)}>×</button></span>
+            ))}
+          </div>
+
           <h3>分類預算（每月）</h3>
           <div className="budgetGrid">
-            {defaultCategories.expense.map((cat) => {
+            {(settings.categories?.expense || defaultCategories.expense).map((cat) => {
               const limit = Number(settings.budgets?.[cat] || 0);
               const spent = Number(budgetSpent[cat] || 0);
               const over = limit > 0 && spent > limit;
