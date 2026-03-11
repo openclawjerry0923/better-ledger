@@ -1,15 +1,15 @@
 :root {
-  --bg: #f3f6fb;
+  --bg: #f7f8fb;
   --surface: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-  --line: #e2e8f0;
-  --primary: #2563eb;
-  --primary-soft: #dbeafe;
-  --success: #16a34a;
-  --danger: #dc2626;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --primary: #0f766e;
+  --primary-soft: #ccfbf1;
+  --success: #15803d;
+  --danger: #b91c1c;
   --radius: 16px;
-  --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  --shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
 }
 
 * {
@@ -19,7 +19,7 @@
 body {
   margin: 0;
   font-family: Inter, "Noto Sans TC", system-ui, -apple-system, sans-serif;
-  background: radial-gradient(1200px 600px at 50% -200px, #dbeafe, transparent), var(--bg);
+  background: radial-gradient(1200px 600px at 50% -260px, #d1fae5, transparent), var(--bg);
   color: var(--text);
 }
 
@@ -45,9 +45,9 @@ header p {
 }
 
 .coinBadge {
-  background: #fff7ed;
-  color: #9a3412;
-  border: 1px solid #fed7aa;
+  background: #ecfeff;
+  color: #155e75;
+  border: 1px solid #bae6fd;
   border-radius: 999px;
   padding: 8px 14px;
   font-weight: 700;
@@ -60,7 +60,7 @@ header p {
   padding: 4px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #f8fafc;
+  background: #f9fafb;
   margin-bottom: 18px;
 }
 
@@ -128,18 +128,18 @@ section {
 }
 
 .card.highlight {
-  border-color: #bfdbfe;
-  background: linear-gradient(180deg, #eff6ff, #dbeafe);
+  border-color: #99f6e4;
+  background: linear-gradient(180deg, #f0fdfa, #ccfbf1);
 }
 
 .coinCard {
-  border-color: #fed7aa;
-  background: linear-gradient(180deg, #fff7ed, #ffedd5);
+  border-color: #a7f3d0;
+  background: linear-gradient(180deg, #f0fdf4, #dcfce7);
 }
 
 .progress {
   height: 10px;
-  background: #fde68a;
+  background: #d1fae5;
   border-radius: 999px;
   overflow: hidden;
   margin-top: 8px;
@@ -148,12 +148,12 @@ section {
 .progress i {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #f59e0b, #d97706);
+  background: linear-gradient(90deg, #10b981, #0f766e);
 }
 
 .coinCard small,
 .coinInfo {
-  color: #92400e;
+  color: #065f46;
 }
 
 h2 {
@@ -195,13 +195,31 @@ h2 {
 }
 
 .list button {
-  border: 1px solid #fecaca;
-  background: #fff1f2;
-  color: #be123c;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: #374151;
   padding: 7px 10px;
   border-radius: 10px;
   cursor: pointer;
   margin-left: 10px;
+}
+
+.btnGhost {
+  border-color: #bfdbfe !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+}
+
+.btnDanger {
+  border-color: #fecaca !important;
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+}
+
+.btnSuccess {
+  border-color: #bbf7d0 !important;
+  background: #f0fdf4 !important;
+  color: #166534 !important;
 }
 
 .income {
@@ -232,7 +250,7 @@ h2 {
 .form input:focus,
 .form select:focus {
   outline: 2px solid var(--primary-soft);
-  border-color: #93c5fd;
+  border-color: #5eead4;
 }
 
 .form button {
@@ -273,7 +291,7 @@ h2 {
 }
 
 .actions button {
-  background: #0f172a;
+  background: #0f766e;
   color: #fff;
 }
 
@@ -329,9 +347,9 @@ h3 {
 }
 
 .chip {
-  background: #eef2ff;
-  border: 1px solid #c7d2fe;
-  color: #3730a3;
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  color: #0e7490;
   border-radius: 999px;
   padding: 6px 10px;
   display: inline-flex;
@@ -343,7 +361,7 @@ h3 {
 .chip button {
   border: none;
   background: transparent;
-  color: #4338ca;
+  color: #0e7490;
   cursor: pointer;
   font-weight: 700;
 }
