@@ -245,6 +245,16 @@ export default function App() {
   const game = settings.gamification || { coins: 0, dailyEarned: 0 };
   const dailyPct = Math.min(100, Math.round(((game.dailyEarned || 0) / 10) * 100));
 
+  const today = new Date().toISOString().slice(0, 10);
+  const overdueTodos = todos.filter((t) => !t.completed && t.dueDate && t.dueDate < today);
+  const todayDueTodos = todos.filter((t) => !t.completed && t.dueDate === today);
+  const doneCount = todos.filter((t) => t.completed).length;
+  const activeCount = todos.length - doneCount;
+  const todayFocusTodos = [...todos]
+    .filter((t) => !t.completed)
+    .sort((a, b) => (a.dueDate || '9999-99-99').localeCompare(b.dueDate || '9999-99-99'))
+    .slice(0, 3);
+
   return (
     <div className="app">
       <header>
@@ -263,7 +273,33 @@ export default function App() {
         ].map(([k, n]) => <button key={k} className={tab === k ? 'active' : ''} onClick={() => setTab(k)}>{n}</button>)}
       </nav>
 
-      {tab === 'home' && <section className="cards"><label>月份 <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} /></label><div className="card"><span>收入</span><b>{money(data.income, settings.currency)}</b></div><div className="card"><span>支出</span><b>{money(data.expense, settings.currency)}</b></div><div className="card highlight"><span>結餘</span><b>{money(data.balance, settings.currency)}</b></div><div className="card coinCard"><span>今日金幣進度 {game.dailyEarned || 0}/10</span><div className="progress"><i style={{ width: `${dailyPct}%` }} /></div><small>來源：每日登入 + 完成待辦 + 新增記帳</small></div></section>}
+      {tab === 'home' && (
+        <section className="cards">
+          <label>月份 <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} /></label>
+          <div className="card"><span>收入</span><b>{money(data.income, settings.currency)}</b></div>
+          <div className="card"><span>支出</span><b>{money(data.expense, settings.currency)}</b></div>
+          <div className="card highlight"><span>結餘</span><b>{money(data.balance, settings.currency)}</b></div>
+          <div className="card coinCard"><span>今日金幣進度 {game.dailyEarned || 0}/10</span><div className="progress"><i style={{ width: `${dailyPct}%` }} /></div><small>來源：每日登入 + 完成待辦 + 新增記帳</small></div>
+
+          <div className="card focusCard">
+            <span>今日焦點（待辦）</span>
+            <b>{activeCount} 未完成 / {doneCount} 已完成</b>
+            <small>今日到期：{todayDueTodos.length}　逾期：{overdueTodos.length}</small>
+            {todayFocusTodos.length ? (
+              <ul className="focusList">
+                {todayFocusTodos.map((t) => (
+                  <li key={t.id}>
+                    <button className="btnSuccess" onClick={() => toggleTodo(t.id)}>完成</button>
+                    <span>{t.title}</span>
+                    <small>{t.dueDate || '無到期日'}</small>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="empty">今天沒有待辦壓力，太棒了</p>}
+            <button type="button" className="btnGhost" onClick={() => setTab('todo')}>前往待辦清單</button>
+          </div>
+        </section>
+      )}
 
       {tab === 'list' && <section><h2>交易明細</h2><div className="toolbar toolbar3"><input placeholder="搜尋分類、備註、日期" value={query} onChange={(e) => setQuery(e.target.value)} /><select value={listMonth} onChange={(e) => setListMonth(e.target.value)}><option value="all">全部月份</option><option value={monthStr()}>{monthStr()}</option></select><select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}><option value="all">全部類型</option><option value="expense">支出</option><option value="income">收入</option></select></div><ul className="list">{pagedRows.map((t) => <li key={t.id}><div><b>{t.category}</b><small>{t.date} {t.note ? `· ${t.note}` : ''}</small></div><div><span className={t.type}>{t.type === 'income' ? '+' : '-'}{money(t.amount, settings.currency)}</span><button className="btnGhost" onClick={() => startEdit(t)}>編輯</button><button className="btnDanger" onClick={() => deleteTransaction(t.id)}>刪除</button></div></li>)}</ul><div className="pager"><button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>上一頁</button><span>{page} / {pageCount}</span><button disabled={page >= pageCount} onClick={() => setPage((p) => p + 1)}>下一頁</button></div>{!filteredRows.length && <p className="empty">沒有符合條件的交易</p>}</section>}
 
