@@ -146,6 +146,15 @@ h2 {
   padding: 12px;
 }
 
+.list li.todoDone {
+  opacity: 0.65;
+  background: #f8fafc;
+}
+
+.list li.todoDone b {
+  text-decoration: line-through;
+}
+
 .list small {
   display: block;
   color: var(--muted);

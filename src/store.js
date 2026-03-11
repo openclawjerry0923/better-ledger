@@ -11,12 +11,14 @@ const defaultAppCategories = {
 
 export const useLedgerStore = create((set, get) => ({
   transactions: [],
+  todos: [],
   settings: { currency: 'TWD', budgets: defaultBudgets, categories: defaultAppCategories },
   loading: false,
 
   async init() {
     set({ loading: true });
     const transactions = await db.transactions.orderBy('date').reverse().toArray();
+    const todos = await db.todos.orderBy('createdAt').reverse().toArray();
     const currency = await db.settings.get('currency');
     const budgets = await db.settings.get('budgets');
     const categories = await db.settings.get('categories');
@@ -30,6 +32,7 @@ export const useLedgerStore = create((set, get) => ({
 
     set({
       transactions,
+      todos,
       settings: {
         currency: currency?.value || 'TWD',
         budgets: normalizedBudgets,
@@ -79,6 +82,38 @@ export const useLedgerStore = create((set, get) => ({
   async setCategories(categories) {
     await db.settings.put({ key: 'categories', value: categories });
     set((s) => ({ settings: { ...s.settings, categories } }));
+  },
+
+  async addTodo(todo) {
+    const now = new Date().toISOString();
+    const payload = {
+      title: todo.title?.trim() || '',
+      note: todo.note?.trim() || '',
+      dueDate: todo.dueDate || '',
+      completed: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+    if (!payload.title) return;
+    const id = await db.todos.add(payload);
+    set((s) => ({ todos: [{ ...payload, id }, ...s.todos] }));
+  },
+
+  async updateTodo(id, patch) {
+    const next = { ...patch, updatedAt: new Date().toISOString() };
+    await db.todos.update(id, next);
+    set((s) => ({ todos: s.todos.map((t) => (t.id === id ? { ...t, ...next } : t)) }));
+  },
+
+  async toggleTodo(id) {
+    const target = get().todos.find((t) => t.id === id);
+    if (!target) return;
+    await get().updateTodo(id, { completed: target.completed ? 0 : 1 });
+  },
+
+  async deleteTodo(id) {
+    await db.todos.delete(id);
+    set((s) => ({ todos: s.todos.filter((t) => t.id !== id) }));
   },
 
   summary(month = monthKey()) {
