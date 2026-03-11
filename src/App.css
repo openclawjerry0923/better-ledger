@@ -343,6 +343,41 @@ h3 {
   margin: 4px 0;
 }
 
+.focusTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.dotAlert {
+  color: #b91c1c;
+  font-style: normal;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.donut {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+}
+
+.donut i {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-size: 11px;
+  color: #0f766e;
+  font-weight: 700;
+}
+
 .focusList {
   list-style: none;
   margin: 8px 0;

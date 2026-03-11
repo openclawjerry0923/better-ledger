@@ -173,6 +173,22 @@ export const useLedgerStore = create((set, get) => ({
     if (becameDone) await get().awardCoin();
   },
 
+  async moveTodo(id, direction = 'up') {
+    const list = [...get().todos];
+    const idx = list.findIndex((t) => t.id === id);
+    if (idx < 0) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= list.length) return;
+
+    const a = list[idx];
+    const b = list[targetIdx];
+    await db.todos.update(a.id, { createdAt: b.createdAt, updatedAt: new Date().toISOString() });
+    await db.todos.update(b.id, { createdAt: a.createdAt, updatedAt: new Date().toISOString() });
+
+    const todos = await db.todos.orderBy('createdAt').reverse().toArray();
+    set({ todos });
+  },
+
   async deleteTodo(id) {
     await db.todos.delete(id);
     set((s) => ({ todos: s.todos.filter((t) => t.id !== id) }));

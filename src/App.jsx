@@ -28,7 +28,7 @@ export default function App() {
     init, transactions, todos,
     addTransaction, updateTransaction, deleteTransaction, replaceAllTransactions,
     summary, settings, setCurrency, setBudgets, setCategories,
-    addTodo, updateTodo, toggleTodo, deleteTodo,
+    addTodo, updateTodo, toggleTodo, moveTodo, deleteTodo,
   } = useLedgerStore();
 
   const [tab, setTab] = useState('home');
@@ -250,6 +250,7 @@ export default function App() {
   const todayDueTodos = todos.filter((t) => !t.completed && t.dueDate === today);
   const doneCount = todos.filter((t) => t.completed).length;
   const activeCount = todos.length - doneCount;
+  const todoCompletionPct = todos.length ? Math.round((doneCount / todos.length) * 100) : 0;
   const todayFocusTodos = [...todos]
     .filter((t) => !t.completed)
     .sort((a, b) => (a.dueDate || '9999-99-99').localeCompare(b.dueDate || '9999-99-99'))
@@ -282,8 +283,11 @@ export default function App() {
           <div className="card coinCard"><span>今日金幣進度 {game.dailyEarned || 0}/10</span><div className="progress"><i style={{ width: `${dailyPct}%` }} /></div><small>來源：每日登入 + 完成待辦 + 新增記帳</small></div>
 
           <div className="card focusCard">
-            <span>今日焦點（待辦）</span>
-            <b>{activeCount} 未完成 / {doneCount} 已完成</b>
+            <span>今日焦點（待辦） {overdueTodos.length > 0 ? <em className="dotAlert">● 有逾期</em> : null}</span>
+            <div className="focusTop">
+              <b>{activeCount} 未完成 / {doneCount} 已完成</b>
+              <div className="donut" style={{ background: `conic-gradient(#0f766e ${todoCompletionPct}%, #e5e7eb 0)` }}><i>{todoCompletionPct}%</i></div>
+            </div>
             <small>今日到期：{todayDueTodos.length}　逾期：{overdueTodos.length}</small>
             {todayFocusTodos.length ? (
               <ul className="focusList">
@@ -335,6 +339,8 @@ export default function App() {
                 </div>
                 <div>
                   <button className="btnSuccess" onClick={() => toggleTodo(t.id)}>{t.completed ? '標記未完成' : '完成'}</button>
+                  <button className="btnGhost" onClick={() => moveTodo(t.id, 'up')}>↑</button>
+                  <button className="btnGhost" onClick={() => moveTodo(t.id, 'down')}>↓</button>
                   <button className="btnGhost" onClick={() => editTodo(t)}>修改</button>
                   <button className="btnDanger" onClick={() => deleteTodo(t.id)}>刪除</button>
                 </div>
